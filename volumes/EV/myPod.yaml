@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myPod
+  labels:
+    name: myPod
+spec:
+  volumes:
+  - name: volume-partage
+    emptyDir: {}
+  containers:
+  - name: conteneur-1
+    image: nginx
+    volumeMounts:
+    - mountPath: /usr/share/nginx/html
+      name: volume-partage
+    resources:
+      limits:
+        memory: "128Mi"
+        cpu: "500m"
+    ports:
+      - containerPort: 80
+  - name: conteneur-2
+    image: alpine
+    volumeMounts:
+    - mountPath: /volume
+      name: volume-partage
+    command: ["/bin/sh"]
+    args: ["-C", "echo Bonjour tout le monde > /volume/index.html"]
+    resources:
+      limits:
+        memory: "128Mi"
+        cpu: "500m"

@@ -14,4 +14,4 @@ git clone https://github.com/kubernetes/autoscaler.git
 
 ```bash
 kubectl get vpa
-```
+```git
