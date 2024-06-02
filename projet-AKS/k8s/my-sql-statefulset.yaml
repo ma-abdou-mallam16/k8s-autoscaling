@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql-statefulset
+  labels:
+    app.kubernetes.io/name: mysql
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: projet-AKS
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mysql
+      app.kubernetes.io/component: database
+      app.kubernetes.io/part-of: projet-AKS
+  serviceName: mysql-service
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mysql
+        app.kubernetes.io/component: database
+        app.kubernetes.io/part-of: projet-AKS
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: mysql-service
+        image: mysql:8
+        ports:
+        - containerPort: 80
+          name: mysql-volume
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: *******;
+        - name: MYSQL_DATABASE
+          value: "blob"
+        volumeMounts:
+        - name: mysql-volume
+          mountPath: /var/lib/mysql
+  volumeClaimTemplates:
+  - metadata:
+      name: mysql-volume
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi

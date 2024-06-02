@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: php-nginx-service
+  labels:
+    app.kubernetes.io/component: server
+    app.kubernetes.io/name: php-nginx
+    app.kubernetes.io/part-of: projet-AKS
+spec:
+  type: LoadBalancer
+  selector:
+    app.kubernetes.io/component: server
+    app.kubernetes.io/name: php-nginx
+    app.kubernetes.io/part-of: projet-AKS
+  ports:
+  - port: 80
+    targetPort: 80
