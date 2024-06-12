@@ -30,7 +30,10 @@ spec:
           name: mysql-volume
         env:
         - name: MYSQL_ROOT_PASSWORD
-          value: *******;
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: MYSQL_ROOT_PASSWORD
         - name: MYSQL_DATABASE
           value: "blob"
         volumeMounts:

@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: test-cm
+data:
+  ma_cle: ma super valeur
+
+---
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: demo-cm
+  labels:
+    name: demo-cm
+spec:
+  containers:
+  - name: demo-cm-conteneur
+    image: busybox
+    command: ["echo"]
+    args: ["$(NOM_VAR)"]
+    env:
+      - name: NOM_VAR
+        valueFrom:
+          configMapKeyRef:
+            name: test-cm
+            key: ma_cle
+    resources:
+      limits:
+        memory: "128Mi"
+        cpu: "500m"
+    ports:
+      - containerPort: 80

@@ -1,9 +1,9 @@
 <?php
 $articles = json_decode(file_get_contents('./articles.json'), true);
 
-$dns = 'mysql:host=mysql-service;dbname=blog';
+$dns = getenv('DB_URL');
 $user = 'root';
-$pwd = 'Pomme123;';
+$pwd = getenv('MYSQL_ROOT_PASSWORD');
 
 $pdo = new PDO($dns, $user, $pwd);
 
