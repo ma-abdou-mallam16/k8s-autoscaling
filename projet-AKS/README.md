@@ -143,3 +143,62 @@ kubectl get all -n loki
 
 kubectl delete all --all -n loki --force
 ```
+
+## -----------------------------------------------------------------
+
+## Installer Nginx Ingress controller avec Helm
+
+```bash
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+
+helm repo update
+
+helm install ingress-nginx ingress-nginx/ingress-nginx \
+  --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-health-probe-request-path"=/healthz
+```
+
+## Vérification de l'installation
+
+```bash
+kubectl get svc -o wide
+```
+
+## Suppression de l'ancien Load Balancer
+
+```bash
+kubectl delete svc php-nginx-service
+```
+
+## Créer le service php-nginx-service.yaml
+
+```bash
+kubectl apply -f k8s/php-nginx-service.yaml
+```
+
+## Créer le clusterIssuer du fichier letsencrypt-issuer.yaml
+
+```bash 
+kubectl apply -f k8s/letsencrypt-issuer.yaml
+
+kubectl describe clusterissuers letsencrypt
+```
+
+## Créer le ingress nginx-ingress.yaml
+
+```bash
+kubectl apply -f k8s/nginx-ingress.yaml
+```
+
+## Pour visualiser l'ensemble des éléments créés par cert-manager
+
+```bash 
+kubectl get certificate
+
+kubectl describe certificate
+
+kubectl describe certificaterequest
+
+kubectl describe order
+
+kubectl describe challenge
+```

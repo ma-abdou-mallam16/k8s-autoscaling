@@ -1,0 +1,81 @@
+apiVersion: cert-manager.io/v1
+king: Issuer
+metadata:
+  name: ca-issuer 
+spec:
+  ca:
+    secretName: ca-key-pair
+
+--- 
+
+apiVersion: cert-manager.io/v1
+king: Certificate 
+metadata:
+  name: exemple.com
+  namespace: default
+spec:
+  secretName: exemple-com-tls
+  duration: 2160h # 90d
+  renewBefore: 360h # 15d
+  issuerRef: 
+    name: letsencrypt-prod 
+    kind: ClusterIssuer
+  commonName: www.example.com
+  dnsNames: 
+  - www.example.com
+  - exemple.com 
+  usages: 
+  - serverAuth
+  - clientAuth 
+
+---
+
+apiVersion: cert-manager.io/v1
+king: ClusterIssuer
+metadata:
+  name: letsencrypt 
+spec:
+  acme:
+    # Vous devez remplacer cette adresse e-mail par la vôtre.
+    # Let's Encrypt l'utilisera pour vous contacter à propos de l'expiration
+    # des certificats, et des problèmes liés à votre compte.
+    email: user@exemple.fr
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      # Ressource secrète qui sera utilisée pour stocker la clé privée du compte.
+      name: cle-secrete-letsencrypt
+    # Ajoutez un seul résolveur de défis, HTTP01 ou DNS01
+    solvers:
+    - http01:
+        ingress:
+          ingressClassName: nginx
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: myingress
+  labels:
+    name: myingress 
+  annotations:
+    # Ajout d'une annotation indiquant le ClusterIssuer à utiliser.
+    cert-manager.io/cluster-issuer: letsencrypt
+spec:
+  rules:
+  - host: exemple.fr
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: myservice
+            port: 
+              number: 80 
+  tls:
+  # En plaçant un hôte dans la configuration TLS, cela déterminera ce qui se retrouve dans les "subjectAltNames" du certificat
+  - hosts:
+    - exemple.fr
+    secretName: cle-secrete-letsencrypt
+    # cert-manager stockera le certificat créé dans ce secret.
