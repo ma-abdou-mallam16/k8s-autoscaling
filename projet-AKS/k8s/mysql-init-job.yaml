@@ -1,0 +1,40 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mysql-init-job
+  labels:
+    app.kubernetes.io/name: mysql-initialization
+    app.kubernetes.io/component: init
+    app.kubernetes.io/part-of: projet-AKS
+spec:
+  ttlSecondsAfterFinished: 100
+  template:
+    spec:
+      restartPolicy: Never
+      volumes:
+        - name: app-config-volume
+          configMap:
+            name: nginx-config
+      containers:
+      - name: init-mysql
+        env:
+          - name: MYSQL_ROOT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mysql-secret
+                key: MYSQL_ROOT_PASSWORD
+        image: dymafr/projet4-php-fpm
+        command:
+          - 'sh'
+          - '-c'
+          - |
+            until nc -z mysql-service 3306;
+            do
+              echo "waiting for mysql";
+              sleep 2;
+            done;
+            echo "mysql is ready";
+            php /app/data/migration.php
+            echo "seed script executed";
+      imagePullSecrets:
+        - name: docker-hub-secret
