@@ -1,0 +1,40 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mongodb-restore
+spec:
+  template:
+    spec:
+      containers:
+      - name: mongodb-restore
+        image: aminou12345/mongobackupgcs
+        command:
+        - "/bin/sh"
+        - "-c"
+        - |
+          echo "Authentification sur GCS..."
+          gcloud auth activate-service-account --key-file=/etc/gcs-credentials/service-account.json
+          echo "Téléchargement du dernier dump depuis GCS..."
+          gsutil cp gs://mongodb-backup-dyma/dump.gz /tmp/dump.gz
+          echo "Décompression du dump..."
+          gunzip /tmp/dump.gz
+          echo "Restauration de la base de données..."
+          mongorestore --drop --uri="mongodb://${MONGODB_USER}:${MONGODB_PASSWORD}@${MONGODB_HOST}" --archive="/tmp/dump"
+        env:
+        - name: MONGODB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mongodb
+              key: mongodb-root-password
+        - name: MONGODB_HOST
+          value: mongodb-headless:27017
+        - name: MONGODB_USER
+          value: root
+        volumeMounts:
+        - name: gcs-credentials
+          mountPath: /etc/gcs-credentials
+      volumes:
+      - name: gcs-credentials
+        secret:
+          secretName: gcs-credentials
+      restartPolicy: OnFailure
