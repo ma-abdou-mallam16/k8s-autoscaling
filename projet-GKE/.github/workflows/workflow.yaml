@@ -1,0 +1,61 @@
+name: Construire et pousser les images Docker sur Docker Hub et mettre à jour le répertoire infra pour déclencher Argo CD
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: front
+            directory: ./frontend
+            image: aminou12345/projet-vue
+          - name: api-node
+            directory: ./backend
+            image: aminou12345/projet-node
+
+    steps:
+    - name: Récupérer le code source
+      uses: actions/checkout@v3
+
+    - name: Obtenir le hash du dernier commit pour le tag des nouvelles images
+      id: get_version
+      run: echo "VERSION=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_ENV
+
+    - name: Connexion à Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Construire et pousser l'image ${{ matrix.name }}
+      uses: docker/build-push-action@v4
+      with:
+        context: ${{ matrix.directory }}
+        file: ${{ matrix.directory }}/Dockerfile
+        push: true
+        tags: ${{ matrix.image }}:${{ env.VERSION }}
+
+  update_k8s:
+      needs: build_and_push
+      runs-on: ubuntu-latest
+
+      steps:
+      - name: Mettre à jour les déploiements Kubernetes
+        run: |
+          eval $(ssh-agent -s)
+          ssh-add - <<< "${{ secrets.GH_SSH_KEY }}"
+          git clone git@github.com:aminou12345/k8s-autoscaling-infra.git
+          cd kubernetes-c19-infra/k8s
+
+          NEW_TAG=$(echo $GITHUB_SHA | cut -c1-7)
+          sed -i "s|aminou12345/projet-vue\(:[a-zA-Z0-9_.-]*\)\?|aminou12345/projet-vue:${NEW_TAG}|g" frontend.deployment.yaml
+          sed -i "s|aminou12345/projet-node\(:[a-zA-Z0-9_.-]*\)\?|aminou12345/projet-node:${NEW_TAG}|g" api.deployment.yaml
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "github-actions@example.com"
+          git add .
+          git commit -m "Mise à jour des versions des images dans les déploiements Kubernetes à $NEW_TAG"
+          git push origin master

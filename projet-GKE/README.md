@@ -186,3 +186,73 @@ docker build -t aminou12345/mongobackupgcs .
 docker push aminou12345/mongobackupgcs
 ```
 
+## Installation d'Argo CD
+
+```bash
+kubectl create namespace argocd
+```
+
+## Application de la configuration
+
+```bash
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+```
+
+## Vérification de l'installation
+
+```bash
+kubectl get all -n argocd 
+```
+
+## Connexion à Argo CD
+
+```bash
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+```
+
+## Créer le mot de passe admin avec le CLI 
+
+```bash
+argocd admin initial-password -n argocd
+```
+
+## Récupération du mot de passe lors d'une future connexion
+
+```bash
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
+```
+
+## Création de la clé SSH de déploiement avec un accès en écriture 
+
+```bash
+ssh-keygen -t ed25519 -C "your_email@example.com"
+```
+
+## Ajout de la clé publique sur Github
+
+  1. Copiez le contenu de la clé publique (fichier .pub).
+
+  2. Allez sur GitHub, puis sur la page du dépôt infra.
+
+  3. Cliquez sur "Settings" dans le menu en haut à droite.
+
+  4. Cliquez sur "Deploy keys" dans le menu latéral gauche.
+
+  5. Cliquez sur "Add deploy key".
+
+  6. Collez la clé publique, donnez un titre à la clé (Clé pour les Actions du répertoire code), cochez la case "Allow write access", puis cliquez sur "Add key".
+
+## Utiliser la clé dans GitHub Actions
+
+  1. Copiez le contenu de la clé privée
+
+  2. Allez sur la page du dépôt du code applicatif.
+
+  3. Cliquez sur "Settings", puis sur "Secrets and variables" dans le menu latéral gauche.
+
+  4. Cliquez sur "Actions" puis sur "New repository secret".
+
+  5. Nommez le secret GH_SSH_KEY, et collez le contenu de la clé privée. Cliquez ensuite sur "Add secret".
+
+## Création du job .github/workflows/workflow.yml
+
